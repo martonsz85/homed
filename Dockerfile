@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.8-slim-buster
+FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.txt entrypoint.sh src ./
 RUN pip3 install -r requirements.txt
