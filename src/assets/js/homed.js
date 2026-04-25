@@ -13,18 +13,31 @@ var [servicesTotal, servicesHealthy, servicesUnhealthy] = [0,0,0];
 var radarTimer = 5 * 60 * 1000; // 5 Minutes
 var serviceTimer = 5 * 60 * 1000; // 5 Minutes
 
+function getPreferences() {
+  try {
+    return JSON.parse(localStorage.getItem('homed-preferences')) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function savePreferences(prefs) {
+  localStorage.setItem('homed-preferences', JSON.stringify(prefs));
+}
+
+function applyDarkMode(enabled) {
+  document.body.classList.toggle('dark-mode', enabled);
+  document.body.classList.toggle('light-mode', !enabled);
+  document.getElementById('control-darkmode').checked = enabled;
+}
+
 function darkmodeTender() {
-  chk = document.getElementById('control-darkmode');
-  chk.addEventListener('click', function() {
-    if (this.checked) {
-      document.body.classList.remove("light-mode");
-      document.body.classList.add("dark-mode");
-      console.log(hdate(), 'Dark mode toggled on');
-    } else {
-      document.body.classList.remove("dark-mode");
-      document.body.classList.add("light-mode");
-      console.log(hdate(), 'Dark mode toggled off');
-    }
+  document.getElementById('control-darkmode').addEventListener('click', function() {
+    var prefs = getPreferences();
+    prefs.darkMode = this.checked;
+    savePreferences(prefs);
+    applyDarkMode(this.checked);
+    console.log(hdate(), 'Dark mode toggled', this.checked ? 'on' : 'off');
   });
 }
 
@@ -114,9 +127,12 @@ function ready(fn) {
 ready(function () {
   darkmodeTender();
 
-  if (document.body.classList.contains('dark-mode')) {
-    console.log(hdate(), 'Dark mode on');
-    document.getElementById('control-darkmode').setAttribute("checked", "true");
+  var prefs = getPreferences();
+  if (prefs.darkMode !== undefined) {
+    applyDarkMode(prefs.darkMode);
+  } else {
+    // No stored preference — sync checkbox to config-driven body class
+    document.getElementById('control-darkmode').checked = document.body.classList.contains('dark-mode');
   }
 
   document.addEventListener('keydown', function (event) {
@@ -139,6 +155,9 @@ ready(function () {
     document.getElementById("search-toggle").click();
   });
 
-  setRadarTimer();
+  var weatherIsPresent = document.getElementsByClassName('weather-tabs');
+  if (weatherIsPresent.length > 0) {
+    setRadarTimer();
+  }
   refresh_status_checks();
 });
