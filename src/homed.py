@@ -1,16 +1,15 @@
-from flask import Flask, render_template, send_from_directory, request, json
+from flask import Flask, render_template, send_from_directory, abort, g, request, json
 from logging.config import dictConfig
 from operator import itemgetter
 import urllib.parse
-import os, sys, re, yaml, logging, feedparser, requests, datetime, time
+import os, sys, re, yaml, logging, requests, datetime, time
 
-version = "1.4.0-prerelease"
+version = "1.5.0-prerelease"
+
 
 app = Flask(__name__)
-app.logger.setLevel(logging.INFO)
-
+app.logger.setLevel(logging.DEBUG)
 app.logger.info("==== Environment: " + os.environ["FLASK_ENV"])
-
 
 @app.route("/")
 def display_home():
@@ -20,7 +19,10 @@ def display_home():
         sorted(config["sections"], key=itemgetter("order")), request.headers
     )
 
-    weather = get_weather(sections)
+    try:
+        weather = get_weather(sections)
+    except:
+        weather = {}
 
     app.logger.info("user={user}, path=/".format(user=user["username"]))
 
@@ -141,7 +143,11 @@ def homed_weather():
     sections = auth_links(
         sorted(config["sections"], key=itemgetter("order")), request.headers
     )
-    weather = get_weather(sections)
+
+    try:
+        weather = get_weather(sections)
+    except:
+        weather = {}
 
     weather_section = {}
     for section in sections:
@@ -150,13 +156,16 @@ def homed_weather():
 
     ts = int(time.time())
 
-    return render_template(
-        "./weather.html",
-        section=weather_section,
-        config=config,
-        weather=weather,
-        timestamp=ts,
-    )
+    if weather != {}:
+        return render_template(
+            "./weather.html",
+            section=weather_section,
+            config=config,
+            weather=weather,
+            timestamp=ts,
+        )
+    else:
+        return "Error fetching weather"
 
     # return json.dumps(get_weather(sections))
 
@@ -390,7 +399,7 @@ def get_weather(sections):
                 weather = {
                     "system_on": True,
                     "nws_forecast": f"https://www.weather.gov/{weather_radar}/",
-                    "radar": f"https://radar.weather.gov/ridge/lite/K{weather_radar}_loop.gif",
+                    "radar": f"https://radar.weather.gov/ridge/standard/K{weather_radar}_loop.gif",
                     "current_conditions": current_conditions,
                     "forecast": forecast,
                     "weather_radar": weather_radar,
