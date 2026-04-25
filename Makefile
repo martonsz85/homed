@@ -1,5 +1,7 @@
 VERSION:=$(shell ./getVersion.sh)
 
+-include Makefile.local
+
 .PHONY: version
 
 fmt:

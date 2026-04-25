@@ -4,7 +4,7 @@ from operator import itemgetter
 import urllib.parse
 import os, sys, re, yaml, logging, requests, datetime, time
 
-version = "1.5.0-prerelease"
+version = "1.5.1-prerelease"
 
 
 app = Flask(__name__)
