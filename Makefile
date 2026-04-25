@@ -1,5 +1,7 @@
 VERSION:=$(shell ./getVersion.sh)
 
+-include Makefile.local
+
 .PHONY: version
 
 fmt:
@@ -7,7 +9,7 @@ fmt:
 
 build:
 	@echo "Building image" && \
-	docker build --no-cache=true --rm -t mwalters/homed:$(VERSION) -t mwalters/homed:latest  .
+	docker build -t mwalters/homed-hub:1.5.0-prerelease -t mwalters/homed-hub:latest .
 
 stop:
 	docker stop homed; true

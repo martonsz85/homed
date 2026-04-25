@@ -1,16 +1,15 @@
-from flask import Flask, render_template, send_from_directory, request, json
+from flask import Flask, render_template, send_from_directory, abort, g, request, json
 from logging.config import dictConfig
 from operator import itemgetter
 import urllib.parse
-import os, sys, re, yaml, logging, feedparser, requests, datetime, time
+import os, sys, re, yaml, logging, requests, datetime, time
 
-version = "1.3.2"
+version = "1.5.1-prerelease"
+
 
 app = Flask(__name__)
-app.logger.setLevel(logging.INFO)
-
+app.logger.setLevel(logging.DEBUG)
 app.logger.info("==== Environment: " + os.environ["FLASK_ENV"])
-
 
 @app.route("/")
 def display_home():
@@ -20,7 +19,10 @@ def display_home():
         sorted(config["sections"], key=itemgetter("order")), request.headers
     )
 
-    weather = get_weather(sections)
+    try:
+        weather = get_weather(sections)
+    except:
+        weather = {}
 
     app.logger.info("user={user}, path=/".format(user=user["username"]))
 
@@ -141,7 +143,11 @@ def homed_weather():
     sections = auth_links(
         sorted(config["sections"], key=itemgetter("order")), request.headers
     )
-    weather = get_weather(sections)
+
+    try:
+        weather = get_weather(sections)
+    except:
+        weather = {}
 
     weather_section = {}
     for section in sections:
@@ -150,13 +156,16 @@ def homed_weather():
 
     ts = int(time.time())
 
-    return render_template(
-        "./weather.html",
-        section=weather_section,
-        config=config,
-        weather=weather,
-        timestamp=ts,
-    )
+    if weather != {}:
+        return render_template(
+            "./weather.html",
+            section=weather_section,
+            config=config,
+            weather=weather,
+            timestamp=ts,
+        )
+    else:
+        return "Error fetching weather"
 
     # return json.dumps(get_weather(sections))
 
@@ -186,6 +195,14 @@ def enrich_config():
         config["motd"] = {"enabled": False}
     if "enabled" not in config["motd"]:
         config["motd"]["enabled"] = True
+
+    if "search_provider" not in config:
+        config["search_provider"] = "google"
+        config["search_url"] = "https://www.google.com/search"
+    elif config["search_provider"] == "google":
+        config["search_url"] = "https://www.google.com/search"
+    elif config["search_provider"] == "duckduckgo":
+        config["search_url"] = "https://duckduckgo.com/"
 
     for section in config["sections"]:
         if "name" in section:
@@ -220,19 +237,40 @@ def enrich_config():
 
 
 def auth_links(sections, headers):
+    return_sections = []
+
     if "Remote-Groups" in headers:
         groups = headers["Remote-Groups"].split(",")
-        for section in sections:
-            if "type" in section and section["type"] != "header":
+
+        for idx, section in enumerate(sections):
+            if "type" in section and section["type"] == "weather":
+                app.logger.info(f"Skipping (type in section and type weather: {section}")
+                return_sections.append(section)
                 continue
+
+            links = []
             for idx, link in enumerate(section["links"]):
+                
                 if "authGroups" not in link:
+                    app.logger.info(f"+++ Keeping this because no authGroups: {link}")
+                    links.append(section["links"][idx])
                     continue
+                
                 for authGroup in link["authGroups"]:
                     if authGroup not in groups:
-                        section["links"].pop(idx)
+                        app.logger.info(f"---- Removing this because not in groups: {link['name']}")
+                        # section["links"].pop(idx)
+                    else:
+                        app.logger.info(f"++++ Keeping this because in groups: {link['name']}")
+                        links.append(section["links"][idx])
 
-    return sections
+            section["links"] = links
+            if len(section["links"]) > 0:
+                return_sections.append(section)
+
+    if len(return_sections) == 0: return_sections = sections
+    
+    return return_sections
 
 
 def get_user(headers):
@@ -250,6 +288,8 @@ def get_user(headers):
         user["email"] = headers["Remote-Email"]
     if "Remote-Groups" in headers:
         user["groups"] = headers["Remote-Groups"].split(",")
+
+    app.logger.info(f"==== User: {user}")
 
     return user
 
@@ -359,7 +399,7 @@ def get_weather(sections):
                 weather = {
                     "system_on": True,
                     "nws_forecast": f"https://www.weather.gov/{weather_radar}/",
-                    "radar": f"https://radar.weather.gov/ridge/lite/K{weather_radar}_loop.gif",
+                    "radar": f"https://radar.weather.gov/ridge/standard/K{weather_radar}_loop.gif",
                     "current_conditions": current_conditions,
                     "forecast": forecast,
                     "weather_radar": weather_radar,

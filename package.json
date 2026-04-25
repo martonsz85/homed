@@ -1,0 +1,24 @@
+{
+  "name": "homed",
+  "version": "1.0.0",
+  "description": "I don't know that anyone is actually using this much anymore -- if you are and any changes I make from here on out annoy you, feel free to contact me.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mwalters/homed.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mwalters/homed/issues"
+  },
+  "homepage": "https://github.com/mwalters/homed#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

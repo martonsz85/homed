@@ -1,5 +1,7 @@
 # homed
 
+I don't know that anyone is actually using this much anymore -- if you are and any changes I make from here on out annoy you, feel free to contact me.
+
 * [GitHub Repo](https://github.com/mwalters/homed)
 * [Docker Hub](https://hub.docker.com/r/mwalters/homed)
 

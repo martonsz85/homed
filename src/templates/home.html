@@ -7,7 +7,7 @@
         <meta name="author" content="" />
         <title>{{ config['name'] }}</title>
         <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-        <link href="css/homed.css" rel="stylesheet" />
+        <link href="css/homed.css?v={{ version }}" rel="stylesheet" />
         {% if config['custom_css'] %}<link href="custom/css/custom.css" rel="stylesheet" />{% endif %}
     </head>
     <body class="{{ ui_mode }}">
@@ -79,6 +79,10 @@
                 {% endfor %}
             </div>
         </div>
+
+        {% include "search.html" with context %}
+        {% include "shortcuts.html" with context %}
+
         <footer class="footer">
             <div class="container">
                 <span id="footer-text" class="text-muted"></span>
@@ -88,7 +92,7 @@
         <script src="js/popper.min.js"></script>
         <script src="js/bootstrap.bundle.min.js"></script>
         <script src="js/fa-all.min.js"></script>
-        <script src="js/homed.js"></script>
+        <script src="js/homed.js?v={{ version }}"></script>
         {% if config['custom_js'] %}<script src="custom/js/custom.js"></script>{% endif %}
     </body>
 </html>
